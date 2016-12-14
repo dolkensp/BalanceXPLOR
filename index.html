@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+    <script src="jquery-ui.min.js"></script>
+    <style>
+      .slidify input[type=range] { display: none; }
+      .slidify { position: relative; list-style: none; margin: 0px; padding: 0px; }
+      .slidify li { z-index: 1; position: absolute !important; cursor: pointer; user-select: none; top: 0px; left: 0px; display: inline-block; }
+      .slidify li a { background: #abcdef; z-index: 10; position: relative; opacity: 0.1; color: #000; text-decoration: none; display: inline-block; white-space: nowrap; line-height: 40px; }
+      .slidify li a:hover { opacity: 0.8; }
+      .slidify li a:active,
+      .slidify li a:focus { z-index: 100; opacity: 1.0; }
+      
+      #.slidify li a { left: -50%; }
+      
+      .slider { width: 400px; height: 40px; outline: 1px solid #f0f; margin: 10px 100px; }
+    </style>
+  </head>
+  <body>
+    <ul id="slider1" name="circleStrafeRadius" class="slider"></ul>
+    <ul id="slider2" name="circleStrafeRadius" class="slider"></ul>
+    
+    <script>
+      !function ($, undefined) {
+        
+        var sliderCount = 0;
+        
+        var drawTick = function(slidify)
+        {
+          var $range = $('input[type=range]', this);
+          
+          $range.attr('max', slidify.options.max);
+          $range.val(this._data.value);
+          var offset = slidify.width() * (this._data.value - slidify.options.min) / (slidify.options.max - slidify.options.min) - this.width() / 2;
+          this.css({ 'left': offset + 'px' });
+        }
+        
+        var drawSlider = function()
+        {
+          for (var i = 0, j = this.values.length; i < j; i++) {
+            drawTick.call(this.values[i], this);
+          }
+        }
+        
+        var initialize = function(data, options)
+        {
+          options = options || {
+            min: 1,
+            max: 100,
+          };
+          
+          return function() {
+            this.slidify = $(this);
+            
+            if (this.slidify.values == null) {
+              this.slidify.values = [];
+              
+              var elementName = this.slidify.attr('name') || ('slidify' + sliderCount);
+              
+              sliderCount++;
+              
+              this.slidify.empty();
+              
+              var slidify = this.slidify;
+              
+              for (var i = 0, j = data.length; i < j; i++) {
+                this.slidify.values[i] = $('<li><input type="range" name="' + elementName + '[' + i + ']" /><a href="#' + data[i].key + '">' + data[i].name + '</a></li>');
+                this.slidify.values[i]._data = {};
+                this.slidify.append(this.slidify.values[i]);
+                
+                this.slidify.values[i].data('slidify', this.slidify.values[i]);
+                
+                this.slidify.values[i].draggable({
+                  axis: "x",
+                  start: function(e, elem) { },
+                  drag: function (e, elem) {
+                    
+                    var $li = $(this).data('slidify');
+                    
+                    var offset = $li.width() / 2;
+                    
+                    var value = ((elem.position.left + offset) / slidify.options.width) *
+                                (slidify.options.max - slidify.options.min) +
+                                 slidify.options.min;
+                    
+                    var overflow =  (value > slidify.options.max && elem.position.left > elem.originalPosition.left);
+                    var underflow = (value < slidify.options.min && elem.position.left < elem.originalPosition.left);
+                    
+                    value = Math.max(Math.min(Math.round(value, 0), slidify.options.max), slidify.options.min);
+                    
+                    // console.log(value);
+                                 
+                    $li._data.value = Math.round(value, 0);
+                    
+                    drawTick.call($li, slidify);
+                    
+                    if (overflow) elem.position.left = slidify.options.width - offset;
+                    if (underflow) elem.position.left = 0 - offset;
+                  },
+                  stop: function() {}
+                });
+              }
+            }
+            
+            this.slidify.options = options;
+            this.slidify.options.width = this.slidify.options.width || this.slidify.width();
+            this.slidify.options.height = this.slidify.options.height || this.slidify.height();
+            
+            for (var i = 0, j = data.length; i < j; i++) {
+              $.extend(this.slidify.values[i]._data, data[i]);
+            }
+            
+            this.slidify.addClass('slidify');
+            
+            drawSlider.call(this.slidify);
+            
+            return this;
+          };
+        };
+        
+        $.fn.slidify = function() {
+          
+          switch (arguments.length)
+          {
+            case 0: return this.map(function() { return this.slidify; });
+            case 1:
+            case 2: return this.each(initialize(arguments[0], arguments[1]));
+          }
+          
+          return this;
+          
+        };
+      
+      }(jQuery);
+    </script>
+    
+    <script>
+      $('ul').slidify([{name:'M50 Interceptor', key:'ORIG_M50', value:10},{name:'F7C Hornet', key:'ANVL_F7C', value:100},{name:'Sabre', key:'AEGS_Sabre', value:20},{name:'350R', key:'ORIG_350R', value:45}], { min: 10, max: 100 }); 
+      $('#slider2').slidify([{name:'M50 Interceptor', key:'ORIG_M50', value:10},{name:'F7C Hornet', key:'ANVL_F7C', value:40},{name:'Sabre', key:'AEGS_Sabre', value:20},{name:'350R', key:'ORIG_350R', value:30}], { min: 10, max: 100 });
+      console.log($('#slider1').slidify());
+    </script>
+  </body>
+</html>
